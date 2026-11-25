@@ -91,3 +91,15 @@ Route::get('reportes/ventaproductos', [App\Http\Controllers\ReporteController::c
 Route::get('reportes/ventaproductos-pdf', [App\Http\Controllers\ReporteController::class, 'ventaproductosPdf']);
 Route::get('reportes/gestiones', [App\Http\Controllers\ReporteController::class, 'gestiones']);
 Route::get('prueba', [App\Http\Controllers\PagoController::class, 'prueba']);
+
+// Análisis predictivo: conserva la autenticación existente, sin permisos nuevos.
+Route::middleware('auth:api')->prefix('analisis')->group(function () {
+    Route::get('reporte', [App\Http\Controllers\AnalisisPredictivoController::class, 'report']);
+    Route::post('entrenar', [App\Http\Controllers\AnalisisPredictivoController::class, 'train']);
+});
+
+Route::middleware('auth:api')->prefix('analisis/clientes')->group(function () {
+    Route::get('{cliente}', [App\Http\Controllers\PedidoPredictivoController::class, 'detail'])->whereNumber('cliente');
+    Route::post('{cliente}/pedidos', [App\Http\Controllers\PedidoPredictivoController::class, 'createSuggested'])->whereNumber('cliente');
+    Route::put('{cliente}/pedidos/{pedido}', [App\Http\Controllers\PedidoPredictivoController::class, 'updateSuggested'])->whereNumber('cliente')->whereNumber('pedido');
+});

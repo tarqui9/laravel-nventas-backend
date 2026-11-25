@@ -15,21 +15,21 @@ class Agrupado extends Model
         }
         return $query;
     }
-    
+
     public function scopeSsucursal($query,$value,$prefijo = null) {
         if ($value) {
             return $query->where($prefijo.'sucursal_id',$value);
         }
         return $query;
     }
-    
+
     public function scopeSuser($query,$value,$prefijo = null) {
         if ($value) {
             return $query->where($prefijo.'user_id',$value);
         }
         return $query;
     }
-    
+
     public function scopeSfechas($query,$ini,$fin,$prefijo = null) {
         if ($ini && $fin) {
             return $query->whereDate($prefijo.'fecha','>=',$ini)
@@ -37,7 +37,7 @@ class Agrupado extends Model
         }
         return $query;
     }
-    
+
     public function sucursal() {
         return $this->belongsTo(Sucursal::class,'sucursal_id');
     }
@@ -55,3 +55,4 @@ class Agrupado extends Model
         return $this->hasMany(AgrupadoSalida::class,'grupo_id')->with(['dtingreso']);
     }
 }
+

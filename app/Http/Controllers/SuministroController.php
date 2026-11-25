@@ -26,11 +26,11 @@ class SuministroController extends Controller
     }
     public function habilitados(Request $request) {
         $term = $request->get('term');
-        $sucursal_id = 1;
+        $sucursal_id = (int) $request->get('sucursal_id', 1);
         $data = Suministro::sterm($term,'')
         ->with(['categoria'])->habilitado()->get();
         $pedidosDespachados = PedidoAgrupado::from('pedido_agrupados as pa')
-        ->join('agrupados as g','g.id','pa.grupo_id')
+        ->join('agrupados as g','g.id_agrupado','pa.grupo_id')
         ->where('g.estado','DESPACHADO')
         ->pluck('pa.pedido_id');
         foreach ($data as $key => $value) {
@@ -41,6 +41,7 @@ class SuministroController extends Controller
             // ->select('p.*','dt.suministro_id','dt.cantidad')
             ->whereNotIn('p.id', $pedidosDespachados)
             ->where('p.estado','PEDIDO')
+            ->where('p.sucursal_id', $sucursal_id)
             ->where('dt.suministro_id',$value->id)
             ->sum('dt.cantidad');
             if ($query) {

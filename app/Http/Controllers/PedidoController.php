@@ -80,14 +80,12 @@ class PedidoController extends Controller
         return response()->json($data);
     }
     public function store(Request $request) {
-        $sucursal_id = $request->input('sucursal_id');
-        $rol_id = $request->input('rol_id');
-        if ($rol_id == 2) {
-            $sucursal_id = 1;
-        }
-        $sucursal_id = 1;
-
         $cliente = $request->input('cliente_id');
+        $clienteModel = \App\Models\Cliente::find(is_array($cliente) ? ($cliente['id'] ?? null) : null);
+        if (!$clienteModel) {
+            return response()->json('Selecciona un cliente válido.', 409);
+        }
+        $sucursal_id = $clienteModel->sucursal_id;
         $detalles = $request->get('detalle');
         // Paso 1: Extraer los `suministro_id`
         $suministroIds = array_column($detalles, 'suministro_id');
@@ -109,7 +107,7 @@ class PedidoController extends Controller
             return response()->json($mensajes, 409);
         }
         $pedidosDespachados = PedidoAgrupado::from('pedido_agrupados as pa')
-        ->join('agrupados as g','g.id','pa.grupo_id')
+        ->join('agrupados as g','g.id_agrupado','pa.grupo_id')
         ->where('g.estado','DESPACHADO')
         ->pluck('pa.pedido_id');
 
@@ -127,6 +125,7 @@ class PedidoController extends Controller
             ->join('pedidos as p','p.id','dt.pedido_id')
             ->whereNotIn('p.id', $pedidosDespachados)
             ->where('p.estado','PEDIDO')
+            ->where('p.sucursal_id', $sucursal_id)
             ->where('dt.suministro_id',$value['suministro_id'])
             ->select('dt.*')
             ->get();
@@ -210,7 +209,11 @@ class PedidoController extends Controller
     }
     
     public function update(Request $request, $id) {
-        $sucursal_id = 1;
+        $pedidoActual = Pedido::find($id);
+        if (!$pedidoActual) {
+            return response()->json('Elemento no encontrado', 404);
+        }
+        $sucursal_id = $pedidoActual->sucursal_id;
         // $valid = Pedido::where('nombre',$request->input('nombre'))
         // ->where('id','!=',$id)->first();
         // if ($valid) {
@@ -239,7 +242,7 @@ class PedidoController extends Controller
             return response()->json($mensajes, 409);
         }
         $pedidosDespachados = PedidoAgrupado::from('pedido_agrupados as pa')
-        ->join('agrupados as g','g.id','pa.grupo_id')
+        ->join('agrupados as g','g.id_agrupado','pa.grupo_id')
         ->where('g.estado','DESPACHADO')
         ->pluck('pa.pedido_id');
         foreach ($detalles as $value) {
@@ -256,6 +259,7 @@ class PedidoController extends Controller
             ->join('pedidos as p','p.id','dt.pedido_id')
             ->whereNotIn('p.id', $pedidosDespachados)
             ->where('p.estado','PEDIDO')
+            ->where('p.sucursal_id', $sucursal_id)
             ->where('p.id','!=',$id)
             ->where('dt.suministro_id',$value['suministro_id'])
             ->select('dt.*')
